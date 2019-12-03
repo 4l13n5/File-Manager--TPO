@@ -5,8 +5,9 @@ import sys
 import copy
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-im_path = 'C:\\Users\\4L13N5\Desktop\\Capture.png'
-file_path = 'C:\\Users\\4L13N5\\Desktop\\test.txt'
+im_path = 'D:\\Dropbox\\Wallpapers\\1398585798111.jpg'
+file_path = 'C:\\Users\\4L13N5\\Desktop\\an attempt was made.txt'
+v_path = 'D:\\Movies\\Comedy Central Roast of William Shatner Uncut & Uncensored DVDRip x264.mkv'
 
 def im_disp(path):
     img = cv2.imread(path)
@@ -14,7 +15,7 @@ def im_disp(path):
     cv2.waitKey(0)
 
 
-v_path = 'D:\\Movies\\Comedy Central Roast of William Shatner Uncut & Uncensored DVDRip x264.mkv'
+
 
 def v_disp(path):
     cap = cv2.VideoCapture(path)
@@ -124,13 +125,7 @@ class App(QtWidgets.QWidget):
         #self.scrollarea.show()
         self.textedit.show()
         FILE = open(file_path,"r")
-        text = ""
-        cnt = 0
-        for line in FILE:
-            if cnt >= 20:
-                break
-            text+=line
-            cnt+=1
+        text = FILE.read()
         FILE.close()
         self.textedit.setText(text)
 
@@ -161,7 +156,7 @@ class App(QtWidgets.QWidget):
 
         self.image_label = QtWidgets.QLabel(self)
         self.image_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.image_label.setScaledContents(1)
+        self.image_label.setAlignment(QtCore.Qt.AlignCenter)
 
         self.text_label = QtWidgets.QLabel(self)
         self.text_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
@@ -171,26 +166,36 @@ class App(QtWidgets.QWidget):
         self.button1.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.button1.clicked.connect(self.play_video)
 
+        self.button2 = QtWidgets.QPushButton("b")
+        self.button2.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.button2.clicked.connect(self.showText)
+
         self.button3 = QtWidgets.QPushButton("c")
         self.button3.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.button3.clicked.connect(self.showImage)
 
         self.textedit = QtWidgets.QTextEdit()
         self.textedit.setReadOnly(True)
-        """
+
         self.scrollarea = QtWidgets.QScrollArea()
         self.scrollarea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        self.scrollarea.setWidget(self.textedit)
-        """
-        layout.addWidget(self.button1,0,0,2,1)
-        layout.addWidget(self.button3,1,1)
+
+        
+        self.vwidget = QtWidgets.QWidget()
+        vlayout = QtWidgets.QVBoxLayout()
+        vlayout.addWidget(self.button1)
+        vlayout.addWidget(self.button2)
+        vlayout.addWidget(self.button3)
+        self.vwidget.setLayout(vlayout)
+
+        layout.addWidget(self.scrollarea,0,0,2,1)
+        layout.addWidget(self.vwidget,1,1)
         layout.addWidget(self.video_label,0,1)
         layout.addWidget(self.image_label,0,1)
-        #layout.addWidget(self.scrollarea,0,1)
+
         layout.addWidget(self.textedit,0,1)
         
 
-        #layout.addWidget(self.overlabel,0,1)
         self.setLayout(layout)
 
 
