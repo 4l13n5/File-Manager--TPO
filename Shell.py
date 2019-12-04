@@ -29,15 +29,6 @@ def move(command,remove=False):
     except:
         print("Nedefinnirana napaka.")
 
-
-
-    except FileNotFoundError:
-        print("Izvorna datoteka ne obstaja.")
-    except FileExistsError:
-        print("Ciljna datoteka že obstaja.")
-    except IndexError:
-        print("Nepravilna sintaksa.")
-
 def list(command):
     try:
         list = ["\\" + x if os.path.isdir(x) else x for x in os.listdir(command[1])]
@@ -122,8 +113,6 @@ def read_command(command):
     else:
         return False
     print("\n" + os.getcwd())
-
-
 
 
 
