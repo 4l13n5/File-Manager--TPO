@@ -44,14 +44,16 @@ def db_max_id(con):
     return max
 
 
-def db_insert_file(con, abspath):
+def db_insert_file(con, abspath, Tag=""):
+    if Tag == "":
+        Tag = extension_index(abspath.split('.')[-1])
     cur = con.cursor()
     try:
         fileID = db_max_id(con)+1
     except:
         fileID=1
     cur.execute(insert_command.format("Datoteka",fileID, abspath))
-    db_update_linker(con,fileID,extension_index(abspath.split('.')[-1]))
+    db_update_linker(con,fileID, Tag)
     con.commit()
 
 def db_insert_tag(con, tag, parent):
@@ -128,8 +130,9 @@ if __name__ == "__main__":
     con = db_connect("file.db")
 
     #Dodamo file in tage
-    db_insert_file(con, "neki/neki/neki.neki")
+    db_insert_file(con, "neki/neki/neki.neki", Tag="neki")
     db_insert_tag(con, "Misc", "root")
+    db_insert_tag(con, "neki", "Misc")
     db_insert_file(con, "neki/neki.png")
     db_insert_tag(con, "Picture", "root")
 
@@ -143,4 +146,4 @@ if __name__ == "__main__":
     #Selectamo vse
 
     print(db_select(con, "Picture"))
-    print(db_select(con, "Misc"))
+    print(db_select(con, "neki"))
