@@ -10,7 +10,8 @@ select_command = "SELECT Datoteka.ID, Datoteka.Path " \
          "FROM Datoteka " \
          "JOIN oznacuje on Datoteka.ID=oznacuje.ID " \
          "JOIN Tag ON oznacuje.Tag = Tag.Tag " \
-         "WHERE Tag.Tag=\'{}\'"
+         "WHERE oznacuje.Tag=\'{}\'"
+
 
 delete_command = "DELETE FROM \"{}\" where tag = \"{}\""
 
@@ -108,7 +109,7 @@ def db_custom(con,command):
     return output
 
 
-select_command = "SELECT * from Datoteka"
+select1 = "SELECT * from Datoteka"
 select2 = "SELECT * from Tag"
 select3 = "SELECT * from oznacuje"
 
@@ -117,6 +118,7 @@ select = "SELECT Datoteka.ID, Datoteka.Path " \
          "JOIN oznacuje on Datoteka.ID=oznacuje.ID " \
          "JOIN Tag ON oznacuje.Tag = Tag.Tag " \
          "WHERE oznacuje.Tag=\'{}\'"
+
 
 
 
@@ -132,15 +134,13 @@ if __name__ == "__main__":
     db_insert_tag(con, "Picture", "root")
 
     #Izpišemo Datoteka tabelo
-    print(db_custom(con, select_command))
+    print(db_custom(con, select1))
     #izpišemo Tag tabelo
     print(db_custom(con, select2))
     #Izpišemo označuje tabelo
     print(db_custom(con, select3))
 
     #Selectamo vse
-    print(db_custom(con, select.format("Picture")))
-    print(db_custom(con, select.format("Misc")))
 
-
-
+    print(db_select(con, "Picture"))
+    print(db_select(con, "Misc"))
