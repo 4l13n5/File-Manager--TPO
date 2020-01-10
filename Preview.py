@@ -1,61 +1,40 @@
+#Skiddadle skidoodle this code is a fucking noodle
+
+
 import math
 import cv2
 import time
 import sys 
 import copy
+import os
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-im_path = 'D:\\Dropbox\\Wallpapers\\1398585798111.jpg'
-file_path = 'C:\\Users\\4L13N5\\Desktop\\an attempt was made.txt'
-v_path = 'D:\\Movies\\Comedy Central Roast of William Shatner Uncut & Uncensored DVDRip x264.mkv'
+im_path = r'D:\Dropbox\Wallpapers\1398585798111.jpg'
+file_path = r'C:\Users\4L13N5\Desktop\an attempt was made.txt'
+#v_path = r'D:\Movies\Comedy Central Roast of William Shatner Uncut & Uncensored DVDRip x264.mkv'
 
-def im_disp(path):
-    img = cv2.imread(path)
-    cv2.imshow("im",img)
-    cv2.waitKey(0)
-
-
-
-
-def v_disp(path):
-    cap = cv2.VideoCapture(path)
-    (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
-
-    if int(major_ver)  < 3 :
-        fps = cap.get(cv2.cv.CV_CAP_PROP_FPS)
-    else :
-        fps = cap.get(cv2.CAP_PROP_FPS)
-    wait_duration = math.ceil(1000 / fps)
-    start = time.time()
-    while(True):
-        if time.time() - start > 5:
-            break
-        ret, frame = cap.read()
-        if ret == True:
-            cv2.imshow('video preview',frame)
-            cv2.waitKey(wait_duration)
-
-    cap.release()
-
-
-#im_disp(im_path)
-#v_disp(v_path)
-
+#DO NOT DELETE LINE BELOW
+#DO NOT
+v_path="aa"
+#[file name, file path, file id]
+test_list = [["1",im_path,1],["2",file_path,2],["3",r'D:\Movies\Comedy Central Roast of William Shatner Uncut & Uncensored DVDRip x264.mkv',3],["4",r"D:\Movies\Gladiator (2000)\Gladiator.EXTENDED.2000.1080.BrRip.264.YIFY.mp4",4],["5",r"D:\Movies\Kingsman.The.Secret.Service.2014.HDRip.XviD.AC3-EVO\Kingsman.The.Secret.Service.2014.HDRip.XviD.AC3-EVO.avi",5],["6","f",6]]
+test_list2 = [["11",im_path,1],["22",file_path,2],["33",r'D:\Movies\Comedy Central Roast of William Shatner Uncut & Uncensored DVDRip x264.mkv',3],["4",r"D:\Movies\Gladiator (2000)\Gladiator.EXTENDED.2000.1080.BrRip.264.YIFY.mp4",4],["5",r"D:\Movies\Kingsman.The.Secret.Service.2014.HDRip.XviD.AC3-EVO\Kingsman.The.Secret.Service.2014.HDRip.XviD.AC3-EVO.avi",5]]
 
 
 class Thread(QtCore.QThread):
     changePixmap = QtCore.pyqtSignal(QtGui.QImage)
-    def __init__(self,parent=None):
+    def __init__(self, parent=None):
         super(Thread, self).__init__(parent)
         self.threadactive = True
         self.i = 0
+        self.path = v_path
 
     def stop(self):
         self.threadactive=False
         self.wait()
 
     def run(self):
-        cap = cv2.VideoCapture(v_path)
+        cap = cv2.VideoCapture(self.path)
         (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
         if int(major_ver)  < 3 :
             fps = cap.get(cv2.cv.CV_CAP_PROP_FPS)
@@ -79,7 +58,153 @@ class Thread(QtCore.QThread):
                 time.sleep(wait_duration)
         cap.release()
 
+class ClickableLabel(QtWidgets.QLabel):
+    def __init__(self, data):
+        super().__init__()
+        self.name = data[0]
+        self.path = data[1]
+        self.id = data[2]
+        self.ctxMenu()
 
+    def ctxMenu(self):
+        self.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        testAction = QtWidgets.QAction(self)
+        testAction.setText("Text")
+        testAction.triggered.connect(self.test)
+
+        changeParentAction = QtWidgets.QAction("Change Parent",self)
+        changeParentAction.triggered.connect(self.changeParent)
+
+        newTagAction = QtWidgets.QAction("Change tag",self)
+        newTagAction.triggered.connect(self.changeTag)
+
+        addTagAction = QtWidgets.QAction("Add tag",self)
+        addTagAction.triggered.connect(self.addTag)
+
+
+        self.addAction(testAction)
+        self.addAction(changeParentAction)
+        self.addAction(newTagAction)
+        self.addAction(addTagAction)
+
+
+    #tu napisi funkcijo ki zbriše iz baze
+    def delete_from_database(self):
+        return
+
+    def getNewTag(self):
+        try:
+            newTag, ok = QtWidgets.QInputDialog().getText(self, "Get text", "Enter new tag", QtWidgets.QLineEdit.Normal, "")
+            if ok:
+                return newTag
+        except BaseException as e:
+            print(e)
+
+    def test(self):
+        print("fuction from context menu {}".format(self.name))
+    
+    def deleteFile(self):
+        try:
+            self.delete_from_database()
+            for i in range(len(self.window().files)):
+                if self.window().files[i][2] == self.id:
+                    del self.window().files[i]
+                    break
+            self.window().addStuff()
+        except BaseException as e:
+            print(e)
+
+    def changeTag(self):
+        print("change tag")
+    
+    def addTag(self):
+        ntag=""   
+        ntag = self.getNewTag()
+        if ntag != "":
+            print(ntag)
+        else:
+            print("not a valid tag name")
+
+    def changeParent(self):
+        print("change parent")
+
+
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.deleteFile()
+
+    def mousePressEvent(self,event):
+        self.setFocus()
+        tip = self.path.split(".")[-1]
+        if tip == "mkv" or tip == "mp4" or tip == "avi":
+            self.parent().parent().parent().parent().parent().play_video(self.path)
+        elif tip == "txt":
+            self.parent().parent().parent().parent().parent().showText(self.path)
+        elif tip == "jpg" or tip == "png":
+            self.parent().parent().parent().parent().parent().showImage(self.path)
+        else:
+            pass
+
+    def mouseDoubleClickEvent(self, event):
+        #self.clicked.emit(self.name)
+        file = self.path
+        try:
+            os.startfile(file)
+        except:
+            print("cannot execute from path {}".format(file))
+
+    def enterEvent(self, event):
+        self.setStyleSheet('background: rgb(200,200,200)')
+
+    def leaveEvent(self, event):
+        self.setStyleSheet('background: rgb(225,225,225)')
+
+
+class TagLineEdit(QtWidgets.QLineEdit):
+    def __init__(self):
+        super().__init__()
+        self.tag=""
+        self.tmp = []
+
+    #s to funkcijo nrdi query select  where tag==self.tag
+    def get_files_where_tag(self,tag):
+        tmp = test_list2
+        return tmp
+        
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter:
+            try:
+                self.tmp = self.get_files_where_tag(self.tag)
+            except BaseException as e:
+                print(e)
+            self.parent().parent().files = copy.deepcopy(self.tmp)
+            self.parent().parent().addStuff()
+
+        else:
+            QtWidgets.QLineEdit.keyPressEvent(self,event)
+
+class FileLineEdit(QtWidgets.QLineEdit):
+    def __init__(self):
+        super().__init__()
+        self.file=""
+        self.tmp = []
+
+    #s to funkcijo nrdi query select  where file_name==self.file
+    def get_files_where_file(self,file):
+        tmp = test_list
+        return tmp
+        
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter:
+            try:
+                self.tmp = self.get_files_where_file(self.file)
+            except BaseException as e:
+                print(e)
+            self.parent().parent().files = copy.deepcopy(self.tmp)
+            self.parent().parent().addStuff()
+        else:
+            QtWidgets.QLineEdit.keyPressEvent(self,event)
 
 
 class App(QtWidgets.QWidget):
@@ -90,25 +215,44 @@ class App(QtWidgets.QWidget):
         self.top = 100
         self.width = 1200
         self.height = 800
+        self.tst="aaaaaaaaaaaaaa"
+        self.files = []
         self.initUI()
-        self.showText()
+        
 
-    
-    def play_video(self):
+    def addStuff(self):
+        self.ScrollLayout = QtWidgets.QVBoxLayout()
+        self.ScrollLayout.addStretch()
+
+        for i in range(len(self.files)):
+            lbl = ClickableLabel(self.files[i])
+            lbl.setText(self.files[i][0])
+            self.ScrollLayout.insertWidget(self.ScrollLayout.count()-1, lbl)
+
+        self.scrollwidget = QtWidgets.QWidget()
+        self.scrollwidget.setStyleSheet('background: rgb(225,225,225)')
+        self.scrollwidget.setLayout(self.ScrollLayout)
+        self.scrollarea.setWidget(self.scrollwidget)
+
+
+    def play_video(self,nk):
+        global v_path
         self.image_label.hide()
         self.textedit.hide()
         self.video_label.show()
+        self.neki=nk
+        v_path= self.neki
         th = Thread(self)
         th.changePixmap.connect(self.setImage)
         th.start()
 
 
-    def showImage(self):
+    def showImage(self,path):
         self.video_label.hide()
         self.textedit.hide()
         self.image_label.show()
 
-        img = cv2.imread(im_path)
+        img = cv2.imread(r'D:\Dropbox\Wallpapers\1398585798111.jpg')
         rgbImage = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w, ch = rgbImage.shape
         bytesPerLine = ch * w
@@ -118,30 +262,40 @@ class App(QtWidgets.QWidget):
         p = convertToQtFormat.scaled(lw,lh,QtCore.Qt.KeepAspectRatio)
         self.image_label.setPixmap(QtGui.QPixmap.fromImage(p))
         
-
-    def showText(self):
+    
+    def showText(self, path):
         self.video_label.hide()
         self.image_label.hide()
-        #self.scrollarea.show()
         self.textedit.show()
-        FILE = open(file_path,"r")
+        FILE = open(path,"r")
         text = FILE.read()
         FILE.close()
         self.textedit.setText(text)
 
 
+    def test(self, string):
+        print("string")
+
     @QtCore.pyqtSlot(QtGui.QImage)
     def setImage(self, image):     
         self.video_label.setPixmap(QtGui.QPixmap.fromImage(image))
 
+
     def initUI(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
-        self.createGridLayout()
+        #self.createGridLayout()
+        self.createVerticalLayout()
 
-
-
-
+    #search bar layout
+    def createHorizontalLayout(self):
+        hLayout = QtWidgets.QHBoxLayout()
+        file_search = FileLineEdit()
+        tag_search = TagLineEdit()
+        hLayout.addWidget(file_search)
+        hLayout.addWidget(tag_search)
+        self.horiz.setLayout(hLayout)
+    #content layout
     def createGridLayout(self):
         layout = QtWidgets.QGridLayout()
         """
@@ -164,21 +318,25 @@ class App(QtWidgets.QWidget):
 
         self.button1 = QtWidgets.QPushButton("a")
         self.button1.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.button1.clicked.connect(self.play_video)
+        self.button1.clicked.connect(self.addStuff)
 
         self.button2 = QtWidgets.QPushButton("b")
         self.button2.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.button2.clicked.connect(self.showText)
+        #self.button2.clicked.connect(self.showText)
 
         self.button3 = QtWidgets.QPushButton("c")
         self.button3.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.button3.clicked.connect(self.showImage)
+        #self.button3.clicked.connect(self.showImage)
 
         self.textedit = QtWidgets.QTextEdit()
         self.textedit.setReadOnly(True)
 
+
         self.scrollarea = QtWidgets.QScrollArea()
-        self.scrollarea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.scrollarea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)        
+        self.scrollarea.setWidgetResizable(True)
+        self.addStuff()
+        
 
         
         self.vwidget = QtWidgets.QWidget()
@@ -196,8 +354,17 @@ class App(QtWidgets.QWidget):
         layout.addWidget(self.textedit,0,1)
         
 
-        self.setLayout(layout)
-
+        self.grid.setLayout(layout)
+    #main layout
+    def createVerticalLayout(self):
+        vLayout = QtWidgets.QVBoxLayout()
+        self.grid = QtWidgets.QWidget(self)
+        self.createGridLayout()
+        self.horiz = QtWidgets.QWidget(self)
+        self.createHorizontalLayout()
+        vLayout.addWidget(self.horiz,1)
+        vLayout.addWidget(self.grid,20)
+        self.setLayout(vLayout)
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
