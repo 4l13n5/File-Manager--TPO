@@ -6,12 +6,22 @@ import cv2
 import time
 import sys 
 import copy
+import codecs
 import os
 from PyQt5 import QtWidgets, QtGui, QtCore
+import db_functions as db
+import Shell as s
 
+con = db.db_connect(".\\db.db")
 im_path = r'D:\Dropbox\Wallpapers\1398585798111.jpg'
 file_path = r'C:\Users\4L13N5\Desktop\an attempt was made.txt'
 #v_path = r'D:\Movies\Comedy Central Roast of William Shatner Uncut & Uncensored DVDRip x264.mkv'
+
+def sql_parser(out):
+    return [(y.split('\\')[-1],y,x) for x,y in out]
+
+def temp_parser(out):
+    return
 
 #DO NOT DELETE LINE BELOW
 #DO NOT
@@ -90,7 +100,15 @@ class ClickableLabel(QtWidgets.QLabel):
 
     #tu napisi funkcijo ki zbriše iz baze
     def delete_from_database(self):
+        db.db_delete(con,"Datoteka","ID = " + self.id)
         return
+
+    def delete_physical(self):
+        s.remove(["",self.path])
+        self.delete_from_database()
+        return
+
+
 
     def getNewTag(self):
         try:
@@ -169,12 +187,14 @@ class TagLineEdit(QtWidgets.QLineEdit):
 
     #s to funkcijo nrdi query select  where tag==self.tag
     def get_files_where_tag(self,tag):
-        tmp = test_list2
-        return tmp
+        str = "SELECT d.ID,Path FROM Datoteka d LEFT JOIN oznacuje o ON d.ID==o.ID WHERE o.Tag == '" + tag+"'"
+        tmp = db.db_custom(con,str)
+        return sql_parser(tmp)
         
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter:
             try:
+                self.tag = self.text()
                 self.tmp = self.get_files_where_tag(self.tag)
             except BaseException as e:
                 print(e)
@@ -192,12 +212,13 @@ class FileLineEdit(QtWidgets.QLineEdit):
 
     #s to funkcijo nrdi query select  where file_name==self.file
     def get_files_where_file(self,file):
-        tmp = test_list
+        tmp = []
         return tmp
         
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter:
             try:
+                self.file = self.text()
                 self.tmp = self.get_files_where_file(self.file)
             except BaseException as e:
                 print(e)
@@ -252,7 +273,7 @@ class App(QtWidgets.QWidget):
         self.textedit.hide()
         self.image_label.show()
 
-        img = cv2.imread(r'D:\Dropbox\Wallpapers\1398585798111.jpg')
+        img = cv2.imread(path)
         rgbImage = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w, ch = rgbImage.shape
         bytesPerLine = ch * w
@@ -264,13 +285,17 @@ class App(QtWidgets.QWidget):
         
     
     def showText(self, path):
-        self.video_label.hide()
-        self.image_label.hide()
-        self.textedit.show()
-        FILE = open(path,"r")
-        text = FILE.read()
-        FILE.close()
-        self.textedit.setText(text)
+        try:
+            self.video_label.hide()
+            self.image_label.hide()
+            self.textedit.show()
+            FILE = codecs.open(path,"r",'UTF-8')
+            text = FILE.read()
+            FILE.close()
+            self.textedit.setText(text)
+        except BaseException as e:
+            print(e)
+
 
 
     def test(self, string):
@@ -318,7 +343,7 @@ class App(QtWidgets.QWidget):
 
         self.button1 = QtWidgets.QPushButton("a")
         self.button1.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.button1.clicked.connect(self.addStuff)
+        #self.button1.clicked.connect(self.addStuff)
 
         self.button2 = QtWidgets.QPushButton("b")
         self.button2.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)

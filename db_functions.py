@@ -7,7 +7,7 @@ insert_command = 'INSERT INTO \"{}\"'\
 
 select_command = "SELECT \"{}\" from \"{}\" WHERE tag = \"{}\""
 
-delete_command = "DELETE FROM \"{}\" where tag = \"{}\""
+delete_command = "DELETE FROM \"{}\" WHERE \"{}\""
 
 
 def db_connect(sqlite3_file):
@@ -25,6 +25,10 @@ def db_max_id(con):
     cur.close()
     return max
 
+def db_custom(con,command):
+    cur = con.cursor()
+    output = cur.execute(command).fetchall()
+    return output
 
 def db_insert_file(con, abspath):
     cur = con.cursor()
@@ -52,9 +56,9 @@ def db_select(con, what, table, where):
     return cur.fetchall()
 
 
-def db_delete(con, tag):
+def db_delete(con,table, where):
     cur = con.cursor()
-    cur.execute(delete_command.format(tag))
+    cur.execute(delete_command.format(table,where))
 
 def extension_index(ext,list=False):
     exte = { "png" : "Picture",
@@ -70,6 +74,9 @@ def extension_index(ext,list=False):
              "mp3" : "Audio",
              "wav" : "Audio",
              "flac" : "Audio",
+             "txt"  : "Document",
+             "pdf" : "Document",
+             "docx": "Document",
              "" : "Misc"}
     try:
         if list:
@@ -85,7 +92,6 @@ def extension_index(ext,list=False):
 #    def db_drop(con):
 #        cur = con.cursor()
 #        cur.execute("DROP TABLE files")
-
 
 
 

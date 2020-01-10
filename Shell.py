@@ -133,7 +133,7 @@ def read_command(command):
     print("\n" + os.getcwd())
 
 def startup(folder):
-    con = sq.connect(".\\dbs.db")
+    con = sq.connect(".\\db.db")
     filelist = find_l(folder)
     db.db_insert_tag(con,"ROOT","ROOT")
     for x in db.extension_index("",True):
@@ -143,9 +143,5 @@ def startup(folder):
 
     return
 
-con = sq.connect(".\\dbs.db")
-cur = con.cursor()
-a=cur.execute("SELECT * FROM Tag")
-
-
-startup('D:\Wallpaper')
+#con = sq.connect(".\\dbs.db")
+#startup('D:\\Wallpaper')
