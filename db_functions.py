@@ -122,12 +122,6 @@ select1 = "SELECT * from Datoteka"
 select2 = "SELECT * from Tag"
 select3 = "SELECT * from oznacuje"
 
-select = "SELECT Datoteka.ID, Datoteka.Path " \
-         "FROM Datoteka " \
-         "JOIN oznacuje on Datoteka.ID=oznacuje.ID " \
-         "JOIN Tag ON oznacuje.Tag = Tag.Tag " \
-         "WHERE oznacuje.Tag=\'{}\'"
-
 
 
 
