@@ -12,6 +12,9 @@ select_command = "SELECT Datoteka.ID, Datoteka.Path " \
          "JOIN Tag ON oznacuje.Tag = Tag.Tag " \
          "WHERE oznacuje.Tag=\'{}\'"
 
+get_subtags_command = "SELECT Tag " \
+                      "FROM Tag " \
+                      "WHERE Parent=\"{}\""
 
 delete_command = "DELETE FROM \"{}\" where tag = \"{}\""
 
@@ -63,7 +66,7 @@ def db_insert_tag(con, tag, parent):
 
 def db_update_linker(con,fileID,tag):
     cur = con.cursor()
-    cur.execute(insert_command.format("oznacuje",fileID, tag))
+    cur.execute(insert_command.format("oznacuje", fileID, tag))
     con.commit()
 
 def db_select(con, tag):
@@ -71,6 +74,10 @@ def db_select(con, tag):
     cur.execute(select_command.format(tag))
     return cur.fetchall()
 
+def get_subtags(con, tag):
+    cur = con.cursor()
+    cur.execute(get_subtags_command.format(tag))
+    return cur.fetchall()
 
 def db_delete(con, tag):
     cur = con.cursor()
@@ -147,3 +154,5 @@ if __name__ == "__main__":
 
     print(db_select(con, "Picture"))
     print(db_select(con, "neki"))
+
+    print(get_subtags(con, "Misc"))
