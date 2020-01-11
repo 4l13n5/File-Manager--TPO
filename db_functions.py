@@ -195,4 +195,3 @@ if __name__ == "__main__":
     # Izpišemo označuje tabelo
     print(db_custom(con, select3))
 
-    db_get_tagpath(con, "neki/neki.png")
