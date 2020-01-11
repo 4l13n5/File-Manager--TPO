@@ -73,16 +73,17 @@ def db_max_id(con):
     return max
 
 
-def db_insert_file(con, abspath, Tag=""):
-    if Tag == "":
-        Tag = extension_index(abspath.split('.')[-1])
+def db_insert_file(con, abspath, name, tag=""):
+    if tag == "":
+        tag = extension_index(abspath.split('.')[-1])
     cur = con.cursor()
     try:
-        fileID = db_max_id(con) + 1
+        fileID = db_max_id(con)+1
     except:
         fileID = 1
-    cur.execute(insert_command.format("Datoteka", fileID, abspath))
-    db_update_linker(con, fileID, Tag)
+    path_and_name = abspath + "\", \"" + name
+    cur.execute(insert_command.format("Datoteka", fileID, path_and_name))
+    db_update_linker(con, fileID, extension_index(abspath.split('.')[-1]))
     con.commit()
 
 

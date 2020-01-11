@@ -4,8 +4,10 @@ import db_functions as db
 import  sqlite3 as sq
 import numpy
 
+
 def changedir(command):
     os.chdir(command[1])
+
 
 def overwrite(path):
     if os.path.isfile(path):
@@ -20,7 +22,8 @@ def overwrite(path):
         return False
     return True
 
-def move(command,remove=False):
+
+def move(command, remove=False):
     try:
         if os.path.isdir(command[2]):
             command[2] = command[2]+"\\"+command[1]
@@ -31,6 +34,7 @@ def move(command,remove=False):
         return
     except:
         print("Nedefinirana napaka.")
+
 
 def list(command):
     try:
@@ -43,6 +47,7 @@ def list(command):
         list = [os.path.abspath(x) for x in os.listdir(".")]
         return list
 
+
 def makef(command):
     try:
         if overwrite(command[1]):
@@ -53,6 +58,7 @@ def makef(command):
         print("Nepravilen vnos.")
     except IndexError:
         print("Nepravilna sintaksa.")
+
 
 def maked(command):
 
@@ -65,6 +71,7 @@ def maked(command):
     else:
         os.mkdir(command[1])
 
+
 def remove(command):
     try:
         os.remove(command[1])
@@ -73,22 +80,27 @@ def remove(command):
     except FileNotFoundError:
         print("Datoteka ne obstaja")
 
+
 def fil(command):
-    list = find_l(command[1],".")
+    list = find_l(command[1], ".")
     for x in list:
         print(x)
     return
 
-def find_l(dir):
+
+def find_l(path):
     match = []
-    for subdir, dirs, files in os.walk(dir,topdown=True):
-        for x in files:
-            match.append(os.path.join(os.path.abspath(subdir),x))
+    for folder, sub_folders, files in os.walk(path):
+        for file in files:
+            file_path = os.path.join(os.path.abspath(folder), file)
+            match.append((file, file_path))
     return match
+
 
 def ls_printer(object):
     for x in object:
-        print(x+"  ",end="")
+        print(x+"  ", end="")
+
 
 def fls(fold):
     all = list(["",fold])
@@ -97,12 +109,10 @@ def fls(fold):
             all.extend(fls(x))
     return all
 
+
 def fls_printer(object):
     for x in object:
-        print(x+"  \n",end="")
-
-
-
+        print(x+"  \n", end="")
 
 
 def read_command(command):
@@ -132,16 +142,18 @@ def read_command(command):
         return False
     print("\n" + os.getcwd())
 
+
 def startup(folder):
     con = sq.connect(".\\dbs.db")
     filelist = find_l(folder)
-    db.db_insert_tag(con,"ROOT","ROOT")
-    for x in db.extension_index("",True):
-        db.db_insert_tag(con,x,"ROOT")
-    for x in filelist:
-        db.db_insert_file(con,x)
+    db.db_insert_tag(con, "ROOT", "ROOT")
+    for preset_tag in db.extension_index("", True):
+        db.db_insert_tag(con, preset_tag, "ROOT")
+    for name, path in filelist:
+        db.db_insert_file(con, path, name)
 
     return
+
 
 con = sq.connect(".\\dbs.db")
 cur = con.cursor()
