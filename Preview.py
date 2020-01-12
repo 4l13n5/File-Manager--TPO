@@ -127,7 +127,7 @@ class ClickableLabel(QtWidgets.QLabel):
         try:
             delTag, ok = QtWidgets.QInputDialog().getText(self, "Get text", "Enter tag to delete", QtWidgets.QLineEdit.Normal, "")
             if ok:
-                strg = "UPDATE Oznacuje SET TagName ='"+str(self.parent())+"' WHERE TagName == '" + delTag+"'"
+                strg = db.delete_command.format("Oznacuje", ("TagName =\"" + delTag + "\""))
                 db.db_custom(con,strg)
                 for x in self.tags:
                     if x == delTag:
@@ -139,7 +139,7 @@ class ClickableLabel(QtWidgets.QLabel):
 
     #tu napisi funkcijo ki zbriše iz baze
     def delete_from_database(self):
-        db.db_delete(con,"Datoteka","ID = " + self.id)
+        db.db_delete(con,"Datoteka","FID = " + self.id)
         return
 
     def delete_physical(self):
