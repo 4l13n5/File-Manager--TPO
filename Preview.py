@@ -13,9 +13,6 @@ import db_functions as db
 import Shell as s
 
 con = db.db_connect(".\\db.db")
-im_path = r'D:\Dropbox\Wallpapers\1398585798111.jpg'
-file_path = r'C:\Users\4L13N5\Desktop\an attempt was made.txt'
-#v_path = r'D:\Movies\Comedy Central Roast of William Shatner Uncut & Uncensored DVDRip x264.mkv'
 
 def sql_parser(out):
     return [(y.split('\\')[-1],y,x) for x,y in out]
@@ -27,8 +24,6 @@ def temp_parser(out):
 #DO NOT
 v_path="aa"
 #[file name, file path, file id]
-test_list = [["1",im_path,1],["2",file_path,2],["3",r'D:\Movies\Comedy Central Roast of William Shatner Uncut & Uncensored DVDRip x264.mkv',3],["4",r"D:\Movies\Gladiator (2000)\Gladiator.EXTENDED.2000.1080.BrRip.264.YIFY.mp4",4],["5",r"D:\Movies\Kingsman.The.Secret.Service.2014.HDRip.XviD.AC3-EVO\Kingsman.The.Secret.Service.2014.HDRip.XviD.AC3-EVO.avi",5],["6","f",6]]
-test_list2 = [["11",im_path,1],["22",file_path,2],["33",r'D:\Movies\Comedy Central Roast of William Shatner Uncut & Uncensored DVDRip x264.mkv',3],["4",r"D:\Movies\Gladiator (2000)\Gladiator.EXTENDED.2000.1080.BrRip.264.YIFY.mp4",4],["5",r"D:\Movies\Kingsman.The.Secret.Service.2014.HDRip.XviD.AC3-EVO\Kingsman.The.Secret.Service.2014.HDRip.XviD.AC3-EVO.avi",5]]
 
 
 class Thread(QtCore.QThread):
@@ -111,14 +106,10 @@ class ClickableLabel(QtWidgets.QLabel):
             newTag, ok = QtWidgets.QInputDialog().getText(self, "Get text", "Enter new tag", QtWidgets.QLineEdit.Normal, "")
             if ok:
                 try:
-                    for t in self.tags:
-                        print(t)
                     for i in range(len(self.tags)):
                         if self.tags[i]==oldTag:
                             self.tags[i]= newTag
                             #tukej dej funkcijo ki v bazi zamenja oldtag za new tag
-                    for t in self.tags:
-                        print(t)
                 except BaseException as e:
                     print(e)
         self.window().tagsDisplay.setText(", ".join(self.tags))
@@ -182,7 +173,6 @@ class ClickableLabel(QtWidgets.QLabel):
             if pTag != "":
                 #tle not dej funkcijo za filu spremenit parent na pTag
                 self.par=pTag
-                print(pTag)
                 self.window().ptagDisplay.setText(self.par)
             else:
                 print("not a valid tag name")
@@ -292,6 +282,12 @@ class App(QtWidgets.QWidget):
         self.tst="aaaaaaaaaaaaaa"
         self.files = []
         self.initUI()
+
+    
+    def fillDatabaseFunction(self):
+        dir = self.tInput.text()
+        #build database dir
+        print(dir)
         
 
     def addStuff(self):
@@ -408,8 +404,22 @@ class App(QtWidgets.QWidget):
         self.ptagDisplay.setStyleSheet("background:white")
         self.tagsDisplay = QtWidgets.QLabel()
         self.tagsDisplay.setStyleSheet("background:white")
+
+        self.tInput = QtWidgets.QLineEdit()
+        self.tInput.returnPressed.connect(self.fillDatabaseFunction)
+        self.tInput.setPlaceholderText("PLACE HOLDER TEXT CHANGE THIS TO WHATEVER THE FUCK THIS DOES")
+
+        self.plab = QtWidgets.QLabel()
+        self.plab.setText("Parent tag:")
+        self.tlab = QtWidgets.QLabel()
+        self.tlab.setText("File tags:")
+
+        vlayout.addWidget(self.tInput)
+        vlayout.addWidget(self.plab)
         vlayout.addWidget(self.ptagDisplay)
+        vlayout.addWidget(self.tlab)
         vlayout.addWidget(self.tagsDisplay)
+
         vlayout.addStretch()
         self.vwidget.setLayout(vlayout)
 
