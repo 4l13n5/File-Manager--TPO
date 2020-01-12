@@ -1,56 +1,66 @@
 /*==============================================================*/
-/* DBMS name:      PostgreSQL 8                                 */
-/* Created on:     09/01/2020 12:21:42                          */
-/*==============================================================*/
-
-/*drop table Datoteka;
-
-drop index JE_DEL_FK;
-
-drop table Tag;
-
-drop index OZNACUJE_FK;
-
-drop table oznacuje;*/
-
-/*==============================================================*/
 /* Table: Datoteka                                              */
 /*==============================================================*/
 create table Datoteka (
-   ID                   INT      not null,
-   Path                 VARCHAR(256)         null,
-   constraint PK_DATOTEKA primary key (ID)
+   FID                  INT             not null,
+   Filepath             VARCHAR(1024)   not null,
+   Filename             VARCHAR(256)    not null,
+   constraint PK_DATOTEKA primary key (FID)
 );
-
-
+////
 /*==============================================================*/
 /* Table: Tag                                                   */
 /*==============================================================*/
 create table Tag (
-   Tag                  VARCHAR(64)			 not null,
+   TName                VARCHAR(64)      not null,
    Parent               VARCHAR(64)          null,
-   FOREIGN KEY(Parent) 	REFERENCES Tag(Tag),
-   constraint PK_TAG primary key (Tag)
+   FOREIGN KEY(Parent) 	REFERENCES Tag(TName),
+   constraint PK_TAG primary key (TName)
 );
-
+////
 /*==============================================================*/
-/* Table: oznacuje                                              */
+/* Table: Oznacuje                                              */
 /*==============================================================*/
-create table oznacuje (
-   ID                   INT4                 null,
-   Tag                  VARCHAR(64)          null,
-   FOREIGN KEY(ID) 		REFERENCES Datoteka(ID),
-   FOREIGN KEY(Tag) 	REFERENCES Tag(Tag)
-
-   
+create table Oznacuje (
+   FileID                 INT4             not null,
+   TagName                VARCHAR(64)      not null,
+   FOREIGN KEY(FileID) 	  REFERENCES Datoteka(FID),
+   FOREIGN KEY(TagName)   REFERENCES Tag(TName),
+   constraint PK_OZNACUJE primary key (FileID, TagName)
 );
-
+////
 /*==============================================================*/
 /* Index: OZNACUJE_FK                                           */
 /*==============================================================*/
-create  index OZNACUJE_FK on oznacuje (
-ID
+create  index OZNACUJE_FK on Oznacuje (
+FileID
 );
+////
+/*==============================================================*/
+/* Trigger: PosodobiStarse                                      */
+/*==============================================================*/
+CREATE TRIGGER PosodobiStarse
+BEFORE DELETE
+ON Tag
+BEGIN
+	UPDATE Tag
+	SET Parent = OLD.Parent
+	WHERE Parent = OLD.TName;
 
+	UPDATE Oznacuje
+	SET TagName = OLD.Parent
+	WHERE TagName = OLD.TName;
+END;
+////
+/*==============================================================*/
+/* Trigger: IzbrisiOznacuje                                     */
+/*==============================================================*/
+CREATE TRIGGER IzbrisiOznacuje
+BEFORE DELETE
+ON Datoteka
+BEGIN
+    DELETE FROM Oznacuje
+    WHERE fileID = OLD.FID;
+END;
 
 

@@ -15,7 +15,7 @@ import Shell as s
 con = db.db_connect(".\\db.db")
 
 def sql_parser(out):
-    return [(y.split('\\')[-1],y,x) for x,y in out]
+    return [(z,y,x) for x,y,z in out]
 
 def temp_parser(out):
     return
@@ -87,18 +87,27 @@ class ClickableLabel(QtWidgets.QLabel):
         changeTagAction = QtWidgets.QAction("Change tag",self)
         changeTagAction.triggered.connect(self.changeTag)
 
+        deleteTagAction = QtWidgets.QAction("Delete tag",self)
+        deleteTagAction.triggered.connect(self.deleteTag)
+
         self.addAction(changeParentAction)
         self.addAction(changeTagAction)
         self.addAction(addTagAction)
+        self.addAction(deleteTagAction)
 
     def getParent(self):
         #vrni starša od tega fila
-        parent = "aaa" #placeholder
-        return parent
+        strg = "SELECT Parent FROM Tag LEFT JOIN Oznacuje ON TagName==TName WHERE FileID == '" + str(self.id)+"'"
+        parent = db.db_custom(con,strg)
+        return parent[0][0]
     def getTags(self):
         #vrni list vseh tagov od tega fila
-        tags = ["a","b"] #placeholder
-        return tags
+        strg = "SELECT Tname  FROM Tag LEFT JOIN Oznacuje ON TagName==TName WHERE FileID == '" + str(self.id)+"'"
+        tags = db.db_custom(con,strg)
+        smt = []
+        for x in tags:
+            smt.append(x[0])
+        return smt
 
     def changeTag(self):
         oldTag, ok = QtWidgets.QInputDialog().getText(self, "Get text", "Enter old tag", QtWidgets.QLineEdit.Normal, "")
@@ -109,10 +118,24 @@ class ClickableLabel(QtWidgets.QLabel):
                     for i in range(len(self.tags)):
                         if self.tags[i]==oldTag:
                             self.tags[i]= newTag
-                            #tukej dej funkcijo ki v bazi zamenja oldtag za new tag
+
                 except BaseException as e:
                     print(e)
         self.window().tagsDisplay.setText(", ".join(self.tags))
+
+    def deleteTag(self):
+        try:
+            delTag, ok = QtWidgets.QInputDialog().getText(self, "Get text", "Enter tag to delete", QtWidgets.QLineEdit.Normal, "")
+            if ok:
+                strg = "UPDATE Oznacuje SET TagName ='"+str(self.parent())+"' WHERE TagName == '" + delTag+"'"
+                db.db_custom(con,strg)
+                for x in self.tags:
+                    if x == delTag:
+                        i = self.tags.index(x)
+                        self.tags.pop(i)
+            self.window().tagsDisplay.setText(", ".join(self.tags))
+        except BaseException as e:
+            print(e)
 
     #tu napisi funkcijo ki zbriše iz baze
     def delete_from_database(self):
@@ -160,8 +183,13 @@ class ClickableLabel(QtWidgets.QLabel):
         ntag=""   
         ntag = self.getNewTag()
         if ntag != "":
-            #tle not dej funkcijo za filu dodat nov tag ntag
-            self.tags.append(ntag)
+            try:
+                #tle not dej funkcijo za filu dodat nov tag ntag
+                self.tags.append(ntag)
+                db.db_insert_tag(con,ntag,self.tags[-1])
+                db.db_update_linker(con,self.id,ntag)
+            except BaseException as e:
+                print(e)
         else:
             print("not a valid tag name")
         self.window().tagsDisplay.setText(", ".join(self.tags))
@@ -170,10 +198,13 @@ class ClickableLabel(QtWidgets.QLabel):
         try:
             pTag = ""
             pTag = self.getNewParent()
-            if pTag != "":
+            if pTag != "" and pTag!=self.tags[0]:
                 #tle not dej funkcijo za filu spremenit parent na pTag
                 self.par=pTag
                 self.window().ptagDisplay.setText(self.par)
+
+                db.db_custom("UPDATE Tag SET "+self.par+" WHERE TName == " + ClickableLabel.tags[0])
+
             else:
                 print("not a valid tag name")
         except BaseException as e:
@@ -189,11 +220,11 @@ class ClickableLabel(QtWidgets.QLabel):
         self.setFocus()
         self.window().selected = self
         try:
-            self.window().ptagDisplay.setText(self.par)
+            self.window().ptagDisplay.setText(db.td.format_tag_path(self.tags[0]))
             self.window().tagsDisplay.setText(", ".join(self.tags))
         except BaseException as e:
             print(e)
-        tip = self.path.split(".")[-1]
+        tip = self.path.split(".")[-1].lower()
         if tip == "mkv" or tip == "mp4" or tip == "avi":
             self.parent().parent().parent().parent().parent().play_video(self.path)
         elif tip == "txt":
@@ -227,9 +258,13 @@ class TagLineEdit(QtWidgets.QLineEdit):
 
     #s to funkcijo nrdi query select  where tag==self.tag
     def get_files_where_tag(self,tag):
-        str = "SELECT d.ID,Path FROM Datoteka d LEFT JOIN oznacuje o ON d.ID==o.ID WHERE o.Tag == '" + tag+"'"
-        tmp = db.db_custom(con,str)
-        return sql_parser(tmp)
+        try:
+            str = "SELECT Filename,Filepath,FID  FROM Datoteka LEFT JOIN Oznacuje ON FID==FileID WHERE TagName == '" + tag+"'"
+            tmp = db.db_custom(con,str)
+        except BaseException as e:
+            print(e)
+
+        return tmp
         
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Return or event.key() == QtCore.Qt.Key_Enter:
@@ -237,11 +272,11 @@ class TagLineEdit(QtWidgets.QLineEdit):
                 self.tag = self.text()
                 self.tmp = self.get_files_where_tag(self.tag)
                 #self.tmp = test_list
+
+                self.parent().parent().files = copy.deepcopy(self.tmp)
+                self.parent().parent().addStuff()
             except BaseException as e:
                 print(e)
-            self.parent().parent().files = copy.deepcopy(self.tmp)
-            self.parent().parent().addStuff()
-
         else:
             QtWidgets.QLineEdit.keyPressEvent(self,event)
 
@@ -254,7 +289,7 @@ class FileLineEdit(QtWidgets.QLineEdit):
 
     #s to funkcijo nrdi query select  where file_name==self.file
     def get_files_where_file(self,file):
-        tmp = []
+        tmp = db.db_select(con,'Filename,Filepath,FID','Datoteka'," Filename == '" + file+"'")
         return tmp
         
     def keyPressEvent(self, event):
@@ -286,8 +321,7 @@ class App(QtWidgets.QWidget):
     
     def fillDatabaseFunction(self):
         dir = self.tInput.text()
-        #build database dir
-        print(dir)
+        s.insert_into_db(con,dir)
         
 
     def addStuff(self):
@@ -407,7 +441,7 @@ class App(QtWidgets.QWidget):
 
         self.tInput = QtWidgets.QLineEdit()
         self.tInput.returnPressed.connect(self.fillDatabaseFunction)
-        self.tInput.setPlaceholderText("PLACE HOLDER TEXT CHANGE THIS TO WHATEVER THE FUCK THIS DOES")
+        self.tInput.setPlaceholderText("Pot do mape za vstavljanje")
 
         self.plab = QtWidgets.QLabel()
         self.plab.setText("Parent tag:")
@@ -419,6 +453,7 @@ class App(QtWidgets.QWidget):
         vlayout.addWidget(self.ptagDisplay)
         vlayout.addWidget(self.tlab)
         vlayout.addWidget(self.tagsDisplay)
+
 
         vlayout.addStretch()
         self.vwidget.setLayout(vlayout)
