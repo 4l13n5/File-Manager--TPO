@@ -259,7 +259,7 @@ class TagLineEdit(QtWidgets.QLineEdit):
     #s to funkcijo nrdi query select  where tag==self.tag
     def get_files_where_tag(self,tag):
         try:
-            str = "SELECT Filename,Filepath,FID  FROM Datoteka LEFT JOIN Oznacuje ON FID==FileID WHERE TagName == '" + tag+"'"
+            str = "SELECT DISTINCT Filename,Filepath,FID  FROM Datoteka LEFT JOIN Oznacuje ON FID==FileID WHERE TagName == '" + tag+"'"
             tmp = db.db_custom(con,str)
         except BaseException as e:
             print(e)
@@ -289,7 +289,11 @@ class FileLineEdit(QtWidgets.QLineEdit):
 
     #s to funkcijo nrdi query select  where file_name==self.file
     def get_files_where_file(self,file):
-        tmp = db.db_select(con,'Filename,Filepath,FID','Datoteka'," Filename == '" + file+"'")
+        try:
+            str = "SELECT DISTINCT Filename,Filepath,FID  FROM Datoteka LEFT JOIN Oznacuje ON FID==FileID WHERE FileName == '" + file+"'"
+            tmp = db.db_custom(con,str)
+        except BaseException as e:
+            print(e)
         return tmp
         
     def keyPressEvent(self, event):
