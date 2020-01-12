@@ -12,7 +12,10 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import db_functions as db
 import Shell as s
 
-con = db.db_connect(".\\db.db")
+#con = db.db_connect(".\\db.db")
+con = s.startup()
+testfolder_path = r"C:\Users\nGregor\Desktop\TPOtest"
+s.insert_into_db(con, testfolder_path)
 im_path = r'D:\Dropbox\Wallpapers\1398585798111.jpg'
 file_path = r'C:\Users\4L13N5\Desktop\an attempt was made.txt'
 #v_path = r'D:\Movies\Comedy Central Roast of William Shatner Uncut & Uncensored DVDRip x264.mkv'
@@ -74,29 +77,54 @@ class ClickableLabel(QtWidgets.QLabel):
         self.name = data[0]
         self.path = data[1]
         self.id = data[2]
+        self.par=""
+        self.tags = []
+        self.par = self.getParent()
+        self.tags = self.getTags()
         self.ctxMenu()
 
     def ctxMenu(self):
         self.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
-        testAction = QtWidgets.QAction(self)
-        testAction.setText("Text")
-        testAction.triggered.connect(self.test)
 
         changeParentAction = QtWidgets.QAction("Change Parent",self)
         changeParentAction.triggered.connect(self.changeParent)
 
-        newTagAction = QtWidgets.QAction("Change tag",self)
-        newTagAction.triggered.connect(self.changeTag)
-
         addTagAction = QtWidgets.QAction("Add tag",self)
         addTagAction.triggered.connect(self.addTag)
 
+        changeTagAction = QtWidgets.QAction("Change tag",self)
+        changeTagAction.triggered.connect(self.changeTag)
 
-        self.addAction(testAction)
         self.addAction(changeParentAction)
-        self.addAction(newTagAction)
+        self.addAction(changeTagAction)
         self.addAction(addTagAction)
 
+    def getParent(self):
+        #vrni starša od tega fila
+        parent = "aaa" #placeholder
+        return parent
+    def getTags(self):
+        #vrni list vseh tagov od tega fila
+        tags = ["a","b"] #placeholder
+        return tags
+
+    def changeTag(self):
+        oldTag, ok = QtWidgets.QInputDialog().getText(self, "Get text", "Enter old tag", QtWidgets.QLineEdit.Normal, "")
+        if ok:
+            newTag, ok = QtWidgets.QInputDialog().getText(self, "Get text", "Enter new tag", QtWidgets.QLineEdit.Normal, "")
+            if ok:
+                try:
+                    for t in self.tags:
+                        print(t)
+                    for i in range(len(self.tags)):
+                        if self.tags[i]==oldTag:
+                            self.tags[i]= newTag
+                            #tukej dej funkcijo ki v bazi zamenja oldtag za new tag
+                    for t in self.tags:
+                        print(t)
+                except BaseException as e:
+                    print(e)
+        self.window().tagsDisplay.setText(", ".join(self.tags))
 
     #tu napisi funkcijo ki zbriše iz baze
     def delete_from_database(self):
@@ -108,13 +136,21 @@ class ClickableLabel(QtWidgets.QLabel):
         self.delete_from_database()
         return
 
-
+    
 
     def getNewTag(self):
         try:
             newTag, ok = QtWidgets.QInputDialog().getText(self, "Get text", "Enter new tag", QtWidgets.QLineEdit.Normal, "")
             if ok:
                 return newTag
+        except BaseException as e:
+            print(e)
+
+    def getNewParent(self):
+        try:
+            newParent, ok = QtWidgets.QInputDialog().getText(self, "Get text", "Enter new parent", QtWidgets.QLineEdit.Normal, "")
+            if ok:
+                return newParent
         except BaseException as e:
             print(e)
 
@@ -132,19 +168,29 @@ class ClickableLabel(QtWidgets.QLabel):
         except BaseException as e:
             print(e)
 
-    def changeTag(self):
-        print("change tag")
-    
     def addTag(self):
         ntag=""   
         ntag = self.getNewTag()
         if ntag != "":
-            print(ntag)
+            #tle not dej funkcijo za filu dodat nov tag ntag
+            self.tags.append(ntag)
         else:
             print("not a valid tag name")
+        self.window().tagsDisplay.setText(", ".join(self.tags))
 
     def changeParent(self):
-        print("change parent")
+        try:
+            pTag = ""
+            pTag = self.getNewParent()
+            if pTag != "":
+                #tle not dej funkcijo za filu spremenit parent na pTag
+                self.par=pTag
+                print(pTag)
+                self.window().ptagDisplay.setText(self.par)
+            else:
+                print("not a valid tag name")
+        except BaseException as e:
+            print(e)
 
 
 
@@ -154,6 +200,12 @@ class ClickableLabel(QtWidgets.QLabel):
 
     def mousePressEvent(self,event):
         self.setFocus()
+        self.window().selected = self
+        try:
+            self.window().ptagDisplay.setText(self.par)
+            self.window().tagsDisplay.setText(", ".join(self.tags))
+        except BaseException as e:
+            print(e)
         tip = self.path.split(".")[-1]
         if tip == "mkv" or tip == "mp4" or tip == "avi":
             self.parent().parent().parent().parent().parent().play_video(self.path)
@@ -184,10 +236,11 @@ class TagLineEdit(QtWidgets.QLineEdit):
         super().__init__()
         self.tag=""
         self.tmp = []
+        self.setPlaceholderText("Tag based search")
 
     #s to funkcijo nrdi query select  where tag==self.tag
     def get_files_where_tag(self,tag):
-        str = "SELECT d.ID,Path FROM Datoteka d LEFT JOIN oznacuje o ON d.ID==o.ID WHERE o.Tag == '" + tag+"'"
+        str = "SELECT FID, Filepath FROM Datoteka d LEFT JOIN Oznacuje o ON d.FID = o.fileID WHERE o.TagName == '" + tag+"'"
         tmp = db.db_custom(con,str)
         return sql_parser(tmp)
         
@@ -196,6 +249,7 @@ class TagLineEdit(QtWidgets.QLineEdit):
             try:
                 self.tag = self.text()
                 self.tmp = self.get_files_where_tag(self.tag)
+                #self.tmp = test_list
             except BaseException as e:
                 print(e)
             self.parent().parent().files = copy.deepcopy(self.tmp)
@@ -209,6 +263,7 @@ class FileLineEdit(QtWidgets.QLineEdit):
         super().__init__()
         self.file=""
         self.tmp = []
+        self.setPlaceholderText("File based search")
 
     #s to funkcijo nrdi query select  where file_name==self.file
     def get_files_where_file(self,file):
@@ -231,7 +286,8 @@ class FileLineEdit(QtWidgets.QLineEdit):
 class App(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        self.title = 'PyQt5 Video'
+        self.title = 'File Manager'
+        self.selected = 0
         self.left = 100
         self.top = 100
         self.width = 1200
@@ -323,11 +379,7 @@ class App(QtWidgets.QWidget):
     #content layout
     def createGridLayout(self):
         layout = QtWidgets.QGridLayout()
-        """
-        self.overlabel = QtWidgets.QLabel(self)
-        self.overlabel.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.overlabel.setStyleSheet('background: black')
-        """
+
 
         self.video_label = QtWidgets.QLabel(self)
         self.video_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
@@ -341,18 +393,6 @@ class App(QtWidgets.QWidget):
         self.text_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.text_label.setScaledContents(1)
 
-        self.button1 = QtWidgets.QPushButton("a")
-        self.button1.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        #self.button1.clicked.connect(self.addStuff)
-
-        self.button2 = QtWidgets.QPushButton("b")
-        self.button2.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        #self.button2.clicked.connect(self.showText)
-
-        self.button3 = QtWidgets.QPushButton("c")
-        self.button3.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        #self.button3.clicked.connect(self.showImage)
-
         self.textedit = QtWidgets.QTextEdit()
         self.textedit.setReadOnly(True)
 
@@ -365,10 +405,15 @@ class App(QtWidgets.QWidget):
 
         
         self.vwidget = QtWidgets.QWidget()
+        self.vwidget.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
         vlayout = QtWidgets.QVBoxLayout()
-        vlayout.addWidget(self.button1)
-        vlayout.addWidget(self.button2)
-        vlayout.addWidget(self.button3)
+        self.ptagDisplay = QtWidgets.QLabel()
+        self.ptagDisplay.setStyleSheet("background:white")
+        self.tagsDisplay = QtWidgets.QLabel()
+        self.tagsDisplay.setStyleSheet("background:white")
+        vlayout.addWidget(self.ptagDisplay)
+        vlayout.addWidget(self.tagsDisplay)
+        vlayout.addStretch()
         self.vwidget.setLayout(vlayout)
 
         layout.addWidget(self.scrollarea,0,0,2,1)

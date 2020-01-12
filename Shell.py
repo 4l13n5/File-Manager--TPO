@@ -153,14 +153,21 @@ def read_command(command):
     print("\n" + os.getcwd())
 
 
-# inicializacija -> dodaj preset tage ter ROOT tag
-def startup(folder):
-    con = db.db_connect(db_file)
+# v bazo vstavi podatke o datotekah iz podane mape
+def insert_into_db(con, folder):
     filelist = find_l(folder)
+    for name, path in filelist:
+        db.db_insert_file(con, path, name, extension_tag=True)
+    con.commit()
+
+
+# inicializacija -> dodaj preset tage ter ROOT tag, moznost podajanja zacetne mape za vstaljanje
+def startup(folder=""):
+    con = db.db_connect(db_file)
     db.db_insert_tag(con, "ROOT", "null")
     for preset_tag in db.extension_index("", list=True):
         db.db_insert_tag(con, preset_tag, "ROOT")
-    for name, path in filelist:
-        db.db_insert_file(con, path, name, extension_tag=True)
+    if folder != "":
+        insert_into_db(con, folder)
 
-    return
+    return con
