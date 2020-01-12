@@ -1,36 +1,50 @@
 import os
 import shutil
 import db_functions as db
-import  sqlite3 as sq
+import sqlite3 as sq
 import numpy
+
+"""
+DATABASE STRUCTURE:
+Datoteka(FID, Filepath, Filename)
+Tag(TName, Parent)
+Oznacuje(FileID, TagName)
+"""
+
+# path for database file
+db_file = ".\\db.db"
+
 
 def changedir(command):
     os.chdir(command[1])
 
+
 def overwrite(path):
     if os.path.isfile(path):
-            print("Prepiši datoteko? y/n")
-            i = input()
-            if i == "y":
-                return True
-            else:
-                return False
+        print("Prepiši datoteko? y/n")
+        i = input()
+        if i == "y":
+            return True
+        else:
+            return False
     if os.path.isdir(path):
         print("Prepisovanje map ni dovoljeno.")
         return False
     return True
 
-def move(command,remove=False):
+
+def move(command, remove=False):
     try:
         if os.path.isdir(command[2]):
-            command[2] = command[2]+"\\"+command[1]
+            command[2] = command[2] + "\\" + command[1]
         if overwrite(command[2]):
-            shutil.copy(command[1],command[2])
+            shutil.copy(command[1], command[2])
             if remove:
                 os.remove(command[1])
         return
     except:
         print("Nedefinirana napaka.")
+
 
 def list(command):
     try:
@@ -43,10 +57,11 @@ def list(command):
         list = [os.path.abspath(x) for x in os.listdir(".")]
         return list
 
+
 def makef(command):
     try:
         if overwrite(command[1]):
-            open(command[1],"w+")
+            open(command[1], "w+")
         else:
             return
     except ValueError:
@@ -54,8 +69,8 @@ def makef(command):
     except IndexError:
         print("Nepravilna sintaksa.")
 
-def maked(command):
 
+def maked(command):
     if os.path.isfile(command[1]):
         print("Obstaja datoteka z enakim imenom.")
         return
@@ -65,6 +80,7 @@ def maked(command):
     else:
         os.mkdir(command[1])
 
+
 def remove(command):
     try:
         os.remove(command[1])
@@ -73,36 +89,40 @@ def remove(command):
     except FileNotFoundError:
         print("Datoteka ne obstaja")
 
+
 def fil(command):
-    list = find_l(command[1],".")
+    list = find_l(command[1], ".")
     for x in list:
         print(x)
     return
 
-def find_l(dir):
+
+# vrne vse datoteke (in datoteke podmap (in datoteke podpodmap...)) iz podane mape
+def find_l(path):
     match = []
-    for subdir, dirs, files in os.walk(dir,topdown=True):
-        for x in files:
-            match.append(os.path.join(os.path.abspath(subdir),x))
+    for folder, sub_folders, files in os.walk(path):
+        for file in files:
+            file_path = os.path.join(os.path.abspath(folder), file)
+            match.append((file, file_path))
     return match
+
 
 def ls_printer(object):
     for x in object:
-        print(x+"  ",end="")
+        print(x + "  ", end="")
+
 
 def fls(fold):
-    all = list(["",fold])
+    all = list(["", fold])
     for x in all:
         if os.path.isdir(x):
             all.extend(fls(x))
     return all
 
+
 def fls_printer(object):
     for x in object:
-        print(x+"  \n",end="")
-
-
-
+        print(x + "  \n", end="")
 
 
 def read_command(command):
@@ -112,7 +132,7 @@ def read_command(command):
     elif call[0] == "cp":
         move(call)
     elif call[0] == "mv":
-        move(call,True)
+        move(call, True)
     elif call[0] == "ls":
         ls_printer(list(call))
     elif call[0] == "mkfile":
@@ -132,16 +152,15 @@ def read_command(command):
         return False
     print("\n" + os.getcwd())
 
+
+# inicializacija -> dodaj preset tage ter ROOT tag
 def startup(folder):
-    con = sq.connect(".\\db.db")
+    con = db.db_connect(db_file)
     filelist = find_l(folder)
-    db.db_insert_tag(con,"ROOT","ROOT")
-    for x in db.extension_index("",True):
-        db.db_insert_tag(con,x,"ROOT")
-    for x in filelist:
-        db.db_insert_file(con,x)
+    db.db_insert_tag(con, "ROOT", "null")
+    for preset_tag in db.extension_index("", list=True):
+        db.db_insert_tag(con, preset_tag, "ROOT")
+    for name, path in filelist:
+        db.db_insert_file(con, path, name, extension_tag=True)
 
     return
-
-#con = sq.connect(".\\dbs.db")
-#startup('D:\\Wallpaper')
